@@ -132,6 +132,7 @@
     <ClInclude Include="Chess.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="Gobang Assignment Version 2.h" />
+    <ClInclude Include="Json.h" />
     <ClInclude Include="Judge.h" />
     <ClInclude Include="Myerror.h" />
     <ClInclude Include="Painter.h" />
@@ -143,6 +144,7 @@
     <ClCompile Include="Chess.cpp" />
     <ClCompile Include="Gobang Assignment Version 2.cpp" />
     <ClCompile Include="Judge.cpp" />
+    <ClCompile Include="Newgame.cpp" />
     <ClCompile Include="Painter.cpp" />
   </ItemGroup>
   <ItemGroup>

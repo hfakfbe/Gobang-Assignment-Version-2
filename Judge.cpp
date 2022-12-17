@@ -5,7 +5,7 @@ std::queue<JudgeMessage> MessageQueue;
 DWORD WINAPI Judgeproc(LPVOID param) {
     Chess* MainChess = ((Judgeparam*)param)->MainChess;
     Painter* MainPainter = ((Judgeparam*)param)->painter;
-    clock_t start = clock();
+    clock_t start = clock(); 
     UNIT_ID color = PIECE_BLACK;
     while (1) {
         if (clock() - start > (unsigned long long)MainChess->timelimit) {

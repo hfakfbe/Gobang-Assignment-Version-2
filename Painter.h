@@ -21,7 +21,7 @@
 DWORD WINAPI Judgeproc(LPVOID);
 
 typedef int UNIT_INTERFACE;
-typedef double UNIT_GRIDLENGTH;
+typedef float UNIT_GRIDLENGTH;
 
 class Painter {
 private:

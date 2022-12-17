@@ -22,5 +22,8 @@
 #include <fstream>
 #include <queue>
 #include <thread>
+#include <algorithm>
+#include <string>
+#include <stack>
 
 #include "CommDlg.h"
