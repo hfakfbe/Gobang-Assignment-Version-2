@@ -24,8 +24,8 @@ public:
 	UNIT_STATUS status;
 	UNIT_ID blackid, whiteid, winner;
 	time_t begintime, endtime, timelimit;
-	std::vector<std::tuple<UNIT_SIZE, UNIT_SIZE, UNIT_ID>> step;
 	bool ifregret;
+	std::vector<std::tuple<UNIT_SIZE, UNIT_SIZE, UNIT_ID>> step;
 
 	Chess(UNIT_ID, UNIT_ID, UNIT_SIZE, time_t, bool);
 	~Chess();

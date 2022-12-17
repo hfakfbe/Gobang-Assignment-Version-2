@@ -73,7 +73,7 @@ INT_PTR CALLBACK Newgame(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         else if (LOWORD(wParam) == IDCANCEL) {
             EndDialog(hDlg, LOWORD(wParam));
             return (INT_PTR)TRUE;
-        }else if(LOWORD(wParam) == CBN_SELCHANGE)
+        }
         break;
     }
     return (INT_PTR)FALSE;

@@ -4,6 +4,7 @@
 
 #define MAXN_SPACE 6
 
+typedef bool		JSON_VALUE_BOOL;
 typedef char		JSON_VALUE_INT8;
 typedef short		JSON_VALUE_INT16;
 typedef int			JSON_VALUE_INT32;
@@ -22,7 +23,8 @@ private:
 	const char space[MAXN_SPACE] = { '\n', '\t', '\r', '\f', '\v', ' ' };
 	//解析调用
 	bool SkipSpace(JSON_BUFFER&, int&);//返回是否到达末尾
-	bool CheckInteger(JSON_BUFFER&, int, int&, JSON_BUFFER&);//从第一个buffer读取，int是开始下标，解析结果存入第二个buffer
+	bool CheckBoolean(JSON_BUFFER&, int, int&, JSON_BUFFER&);//从第一个buffer读取，int是开始下标，解析结果存入第二个buffer
+	bool CheckInteger(JSON_BUFFER&, int, int&, JSON_BUFFER&);
 	bool CheckString(JSON_BUFFER&, int, int&, JSON_BUFFER&);
 	bool CheckJson(JSON_BUFFER&, int, int&, JSON_BUFFER&);
 	bool CheckArray(JSON_BUFFER&, int, int&, JSON_BUFFER&);//里面再调用前三者
@@ -32,20 +34,22 @@ public:
 	JSON_BUFFER Jsontostring();
 	inline bool isSucceed() { return Succeed; }
 
-	void Addkey(JSON_KEY_STRING, JSON_VALUE_INT8&);//不检查KEY重复性
-	void Addkey(JSON_KEY_STRING, JSON_VALUE_INT16&);
-	void Addkey(JSON_KEY_STRING, JSON_VALUE_INT32&);
-	void Addkey(JSON_KEY_STRING, JSON_VALUE_INT64&);
-	void Addkey(JSON_KEY_STRING, JSON_VALUE_STRING&);
-	void Addkey(JSON_KEY_STRING, Json&);
-	void Addkey(JSON_KEY_STRING, std::vector<JSON_VALUE_INT8>&);
-	void Addkey(JSON_KEY_STRING, std::vector<JSON_VALUE_INT16>&);
-	void Addkey(JSON_KEY_STRING, std::vector<JSON_VALUE_INT32>&);
-	void Addkey(JSON_KEY_STRING, std::vector<JSON_VALUE_INT64>&);
-	void Addkey(JSON_KEY_STRING, std::vector<JSON_VALUE_STRING>&);
-	void Addkey(JSON_KEY_STRING, std::vector<Json>&);
+	void Addkey(const JSON_KEY_STRING, JSON_VALUE_BOOL&);
+	void Addkey(const JSON_KEY_STRING, JSON_VALUE_INT8&);//不检查KEY重复性
+	void Addkey(const JSON_KEY_STRING, JSON_VALUE_INT16&);
+	void Addkey(const JSON_KEY_STRING, JSON_VALUE_INT32&);
+	void Addkey(const JSON_KEY_STRING, JSON_VALUE_INT64&);
+	void Addkey(const JSON_KEY_STRING, JSON_VALUE_STRING&);
+	void Addkey(const JSON_KEY_STRING, Json&);
+	void Addkey(const JSON_KEY_STRING, std::vector<JSON_VALUE_BOOL>&);
+	void Addkey(const JSON_KEY_STRING, std::vector<JSON_VALUE_INT8>&);
+	void Addkey(const JSON_KEY_STRING, std::vector<JSON_VALUE_INT16>&);
+	void Addkey(const JSON_KEY_STRING, std::vector<JSON_VALUE_INT32>&);
+	void Addkey(const JSON_KEY_STRING, std::vector<JSON_VALUE_INT64>&);
+	void Addkey(const JSON_KEY_STRING, std::vector<JSON_VALUE_STRING>&);
+	void Addkey(const JSON_KEY_STRING, std::vector<Json>&);
 
-	void Askkey(JSON_KEY_STRING, JSON_BUFFER&);
+	void Askkey(const JSON_KEY_STRING, JSON_BUFFER&);
 
-	void Translatevector(JSON_KEY_STRING, std::vector<JSON_BUFFER>&);
+	void Translatevector(const JSON_KEY_STRING, std::vector<JSON_BUFFER>&);
 };

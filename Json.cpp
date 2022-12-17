@@ -1,30 +1,44 @@
 #include "Json.h"
 
-void Json::Addkey(JSON_KEY_STRING key, JSON_VALUE_INT8& value) {
+void Json::Addkey(const JSON_KEY_STRING key, JSON_VALUE_BOOL& value) {
+	KeysValues.push_back({ "\"" + key + "\"" ,value?"true":"false"});
+}
+
+void Json::Addkey(const JSON_KEY_STRING key, JSON_VALUE_INT8& value) {
 	KeysValues.push_back({ "\"" + key + "\"" ,std::to_string(value) });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, JSON_VALUE_INT16& value) {
+void Json::Addkey(const JSON_KEY_STRING key, JSON_VALUE_INT16& value) {
 	KeysValues.push_back({ "\"" + key + "\"" ,std::to_string(value) });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, JSON_VALUE_INT32& value) {
+void Json::Addkey(const JSON_KEY_STRING key, JSON_VALUE_INT32& value) {
 	KeysValues.push_back({ "\"" + key + "\"" ,std::to_string(value) });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, JSON_VALUE_INT64& value) {
+void Json::Addkey(const JSON_KEY_STRING key, JSON_VALUE_INT64& value) {
 	KeysValues.push_back({ "\"" + key + "\"" ,std::to_string(value) });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, JSON_VALUE_STRING& value) {
+void Json::Addkey(const JSON_KEY_STRING key, JSON_VALUE_STRING& value) {
 	KeysValues.push_back({ "\"" + key + "\"" ,"\"" + value + "\"" });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, Json& value) {
+void Json::Addkey(const JSON_KEY_STRING key, Json& value) {
 	KeysValues.push_back({ "\"" + key + "\"" ,value.Jsontostring() });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_INT8>& values) {
+void Json::Addkey(const JSON_KEY_STRING key, std::vector<JSON_VALUE_BOOL>& values) {
+	JSON_BUFFER tmp = "[";
+	for (int i = 0; i < values.size(); ++i) {
+		if (i != 0) tmp += ",";
+		tmp += values[i]?"true":"false";
+	}
+	tmp += "]";
+	KeysValues.push_back({ "\"" + key + "\"" ,tmp });
+}
+
+void Json::Addkey(const JSON_KEY_STRING key, std::vector<JSON_VALUE_INT8>& values) {
 	JSON_BUFFER tmp = "[";
 	for (int i = 0; i < values.size(); ++i) {
 		if (i != 0) tmp += ",";
@@ -34,7 +48,7 @@ void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_INT8>& values) {
 	KeysValues.push_back({ "\"" + key + "\"" ,tmp });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_INT16>& values) {
+void Json::Addkey(const JSON_KEY_STRING key, std::vector<JSON_VALUE_INT16>& values) {
 	JSON_BUFFER tmp = "[";
 	for (int i = 0; i < values.size(); ++i) {
 		if (i != 0) tmp += ",";
@@ -44,7 +58,7 @@ void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_INT16>& values) {
 	KeysValues.push_back({ "\"" + key + "\"" ,tmp });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_INT32>& values) {
+void Json::Addkey(const JSON_KEY_STRING key, std::vector<JSON_VALUE_INT32>& values) {
 	JSON_BUFFER tmp = "[";
 	for (int i = 0; i < values.size(); ++i) {
 		if (i != 0) tmp += ",";
@@ -54,7 +68,7 @@ void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_INT32>& values) {
 	KeysValues.push_back({ "\"" + key + "\"" ,tmp });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_INT64>& values) {
+void Json::Addkey(const JSON_KEY_STRING key, std::vector<JSON_VALUE_INT64>& values) {
 	JSON_BUFFER tmp = "[";
 	for (int i = 0; i < values.size(); ++i) {
 		if (i != 0) tmp += ",";
@@ -64,7 +78,7 @@ void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_INT64>& values) {
 	KeysValues.push_back({ "\"" + key + "\"" ,tmp });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_STRING>& values) {
+void Json::Addkey(const JSON_KEY_STRING key, std::vector<JSON_VALUE_STRING>& values) {
 	JSON_BUFFER tmp = "[";
 	for (int i = 0; i < values.size(); ++i) {
 		if (i != 0) tmp += ",";
@@ -74,7 +88,7 @@ void Json::Addkey(JSON_KEY_STRING key, std::vector<JSON_VALUE_STRING>& values) {
 	KeysValues.push_back({ "\"" + key + "\"" ,tmp });
 }
 
-void Json::Addkey(JSON_KEY_STRING key, std::vector<Json>& values) {
+void Json::Addkey(const JSON_KEY_STRING key, std::vector<Json>& values) {
 	JSON_BUFFER tmp = "[";
 	for (int i = 0; i < values.size(); ++i) {
 		if (i != 0) tmp += ",";
@@ -95,6 +109,21 @@ inline bool Json::SkipSpace(JSON_BUFFER& buffer, int& pos) {
 		if (flag) return false;
 	}
 	return true;//到这里就失败了
+}
+
+bool Json::CheckBoolean(JSON_BUFFER& buffer, int pos, int& end, JSON_BUFFER& value) {
+	const std::string boolstring[2] = { "true", "false" };
+	for (int j = 0; j < 2; ++j) {
+		if (pos + boolstring[j].size() - 1 < buffer.size()) {
+			bool success = true;
+			for (int i = 0; i < boolstring[j].size(); ++i)
+				if (buffer[pos + i] != boolstring[j][i]) {
+					success = false; break;
+				}
+			if (success) { pos += boolstring[j].size(); value = boolstring[j]; return true; }
+		}
+	}
+	return false;
 }
 
 bool Json::CheckInteger(JSON_BUFFER& buffer, int pos, int& end, JSON_BUFFER& value) {//从当前开始读取，end是最后成功读取之后的
@@ -153,8 +182,9 @@ bool Json::CheckArray(JSON_BUFFER& buffer, int pos, int& end, JSON_BUFFER& value
 	int endtmp;
 	value = "[";
 	JSON_BUFFER tmp;
-	int type = 0;
-	if (CheckInteger(buffer, pos, endtmp, tmp)) type = 1;
+	int type = -1;
+	if (CheckBoolean(buffer, pos, endtmp, tmp)) type = 0;
+	else if (CheckInteger(buffer, pos, endtmp, tmp)) type = 1;
 	else if (CheckString(buffer, pos, endtmp, tmp)) type = 2;
 	else if (CheckJson(buffer, pos, endtmp, tmp)) type = 3;
 	else if (CheckArray(buffer, pos, endtmp, tmp)) type = 4;
@@ -168,7 +198,8 @@ bool Json::CheckArray(JSON_BUFFER& buffer, int pos, int& end, JSON_BUFFER& value
 	while (buffer[pos] == ',') {
 		pos++;
 		if (SkipSpace(buffer, pos)) return false;
-		if (type == 1) { if (CheckInteger(buffer, pos, end, tmp) == false) return false; }
+		if(type == 0) { if (CheckBoolean(buffer, pos, end, tmp) == false) return false; }
+		else if (type == 1) { if (CheckInteger(buffer, pos, end, tmp) == false) return false; }
 		else if (type == 2) { if (CheckString(buffer, pos, end, tmp) == false) return false; }
 		else if (type == 3) { if (CheckJson(buffer, pos, end, tmp) == false) return false; }
 		else if (type == 4) { if (CheckArray(buffer, pos, end, tmp) == false) return false; }
@@ -205,7 +236,8 @@ Json::Json(JSON_BUFFER buffer) {//排除其他不合法字符
 		if (SkipSpace(buffer, pos)) TRANSLATE_FAIL;
 		int end;//VALUE
 		JSON_BUFFER value;
-		if (CheckInteger(buffer, pos, end, value)) pos = end;
+		if (CheckBoolean(buffer, pos, end, value)) pos = end;
+		else if (CheckInteger(buffer, pos, end, value)) pos = end;
 		else if (CheckString(buffer, pos, end, value)) pos = end;
 		else if (CheckArray(buffer, pos, end, value)) pos = end;
 		else if (CheckJson(buffer, pos, end, value)) pos = end;

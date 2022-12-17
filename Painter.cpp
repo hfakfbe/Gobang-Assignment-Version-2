@@ -1,4 +1,5 @@
 #include "Painter.h"
+#include "Json.h"
 
 const WCHAR* Win_black = L"Black Win!";
 const WCHAR* Win_white = L"White Win!";
@@ -124,7 +125,30 @@ void Painter::MouseOperation(UNIT_INTERFACE x, UNIT_INTERFACE y, UNIT_STATUS fla
 }
 
 void Painter::SaveToJson(const WCHAR* filename) {
-    //Making
+    std::ofstream outfile;
+    outfile.open(filename, std::ios::out | std::ios::trunc);
+    Json savejson;
+    savejson.Addkey("size", MainChess->size);
+    savejson.Addkey("status", MainChess->status);
+    savejson.Addkey("blackid", MainChess->blackid);
+    savejson.Addkey("whiteid", MainChess->whiteid);
+    savejson.Addkey("winner", MainChess->winner);
+    savejson.Addkey("begintime", MainChess->begintime);
+    savejson.Addkey("endtime", MainChess->endtime);
+    savejson.Addkey("timelimit", MainChess->timelimit);
+    savejson.Addkey("ifregret", MainChess->ifregret);
+    std::vector<Json> subjson;
+    for (int i = 1; i <= MainChess->step.size(); ++i) {
+        Json tmp;
+        tmp.Addkey("index", i);
+        tmp.Addkey("x", std::get<0>(MainChess->step[i-1]));
+        tmp.Addkey("y", std::get<1>(MainChess->step[i-1]));
+        tmp.Addkey("color", std::get<2>(MainChess->step[i-1]));
+        subjson.push_back(tmp);
+    }
+    savejson.Addkey("step", subjson);
+    outfile << savejson.Jsontostring();
+    outfile.close();
 }
 
 void Painter::RequestMode(UNIT_STATUS flag) {

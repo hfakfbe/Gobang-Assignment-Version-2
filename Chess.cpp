@@ -1,4 +1,5 @@
 #include "Chess.h"
+#include "Painter.h"
 
 Chess::Chess(UNIT_ID blackid, UNIT_ID whiteid, UNIT_SIZE size, time_t timelimit,bool ifregret):
     blackid(blackid), whiteid(whiteid), timelimit(timelimit), ifregret(ifregret) {
@@ -9,7 +10,7 @@ Chess::Chess(UNIT_ID blackid, UNIT_ID whiteid, UNIT_SIZE size, time_t timelimit,
 	}
 	begintime = time(nullptr);
 	endtime = -1;
-	winner = -1;
+	winner = ID_NULL;
 	status = STATUS_GAMING;
 }
 

@@ -154,6 +154,61 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             case IDM_SUSRES:
                 CurrentPainter->RequestMode(REQUEST_SUSRES);
                 break;
+            case IDM_SAVE:
+            {
+                OPENFILENAME ofn;
+                WCHAR* szFile = new WCHAR[512];
+                WCHAR* szFileTitle = new WCHAR[512];
+                memset(&ofn, 0, sizeof(ofn));
+                memset(szFile, 0, sizeof(WCHAR) * 512);
+                memset(szFileTitle, 0, sizeof(WCHAR) * 512);
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = hWnd;
+                ofn.hInstance = hInst;
+                ofn.lpstrFilter = L"Json File(*.json)\0*.json\0";
+                ofn.nFilterIndex = 1;
+                ofn.lpstrFile = szFile;
+                ofn.nMaxFile = sizeof(WCHAR) * 512;
+                ofn.lpstrFileTitle = szFileTitle;
+                ofn.nMaxFileTitle = sizeof(WCHAR) * 512;
+                ofn.Flags = OFN_FILEMUSTEXIST | OFN_PATHMUSTEXIST | OFN_HIDEREADONLY | OFN_OVERWRITEPROMPT;
+                ofn.lpstrTitle = L"另存为...";
+
+                // 按下确定按钮
+                BOOL ok = GetSaveFileName(&ofn);
+                if (ok) {
+                    CurrentPainter->SaveToJson(szFileTitle);
+                    SendMessage(hWnd, WM_SETFOCUS, 0, 0);
+                }
+                break;
+            }
+            case IDM_OPEN: 
+            {
+                OPENFILENAME ofn;
+                WCHAR* szFile = new WCHAR[512];
+                WCHAR* szFileTitle = new WCHAR[512];
+                memset(&ofn, 0, sizeof(ofn));
+                memset(szFile, 0, sizeof(WCHAR) * 512);
+                memset(szFileTitle, 0, sizeof(WCHAR) * 512);
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = hWnd;
+                ofn.hInstance = hInst;
+                ofn.lpstrFilter = L"Json File(.json)\0*.json\0";
+                ofn.nFilterIndex = 1;
+                ofn.lpstrFile = szFile;
+                ofn.nMaxFile = sizeof(WCHAR) * 512;
+                ofn.lpstrFileTitle = szFileTitle;
+                ofn.nMaxFileTitle = sizeof(WCHAR) * 512;
+                ofn.Flags = OFN_FILEMUSTEXIST | OFN_EXPLORER;
+
+                // 按下确定按钮
+                BOOL ok = GetOpenFileName(&ofn);
+                if (ok) {
+                    delete CurrentPainter;
+                    CurrentPainter = new Painter(szFileTitle, hWnd);
+                }
+                break;
+            }
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
