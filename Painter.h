@@ -10,10 +10,12 @@
 #define REQUEST_SUSRES	122
 #define REQUEST_ANALYS	123
 #define REQUEST_REPLAY	124
+#define REQUEST_GIVEIN	125
 
 #define MODEMSG_SET		171
 #define MODEMSG_SUSRES	172
 #define MODEMSG_REGRET	173
+#define MODEMSG_GIVEIN	174
 
 #define ID_HUMAN		181
 #define ID_AI			182
@@ -40,9 +42,9 @@ private:
 	void Mode_Analysis(){}
 
 public:
-	Painter(HWND, UNIT_ID, UNIT_ID, UNIT_SIZE);
-	Painter(const WCHAR*, HWND, UNIT_ID, UNIT_ID, UNIT_SIZE){}
-	~Painter(){}
+	Painter(HWND, UNIT_ID, UNIT_ID, UNIT_SIZE, time_t, bool);
+	Painter(const WCHAR*, HWND){}
+	~Painter();
 
 	void PaintBoard(HDC, RECT*);//画棋盘
 	void DrawChess(HDC, UNIT_STATUS, COLORREF);//画所有指定颜色棋子
@@ -56,6 +58,8 @@ public:
 
 	void RequestMode(UNIT_STATUS);
 	void GameOverAlert(UNIT_ID);
+
+	inline HWND GetHwnd() { return hWnd; }//在对话框中创建Painter对象需要用
 };
 
 class Judgeparam {

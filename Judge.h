@@ -16,5 +16,7 @@ public:
 #define JUDGEMSG_SET				100
 #define JUDGEMSG_REGRET				101
 #define JUDGEMSG_SUSPEND_RESTART	102
+#define JUDGEMSG_EXIT				103
+#define JUDGEMSG_GIVEIN				104
 
 extern std::queue<JudgeMessage> MessageQueue;

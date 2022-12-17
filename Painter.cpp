@@ -4,11 +4,18 @@ const WCHAR* Win_black = L"Black Win!";
 const WCHAR* Win_white = L"White Win!";
 const WCHAR* Win_title = L"Game Over!";
 
-Painter::Painter(HWND hWnd, UNIT_ID blackid, UNIT_ID whiteid, UNIT_SIZE size) :hWnd(hWnd) {
-    MainChess = new Chess(blackid, whiteid, size);
+Painter::Painter(HWND hWnd, UNIT_ID blackid, UNIT_ID whiteid, UNIT_SIZE size, time_t timelimit, bool ifregret) :hWnd(hWnd) {
+    MainChess = new Chess(blackid, whiteid, size, timelimit, ifregret);
     Judgeparam* param = new Judgeparam(MainChess, this);
     hJudge = CreateThread(NULL, 0, Judgeproc, (void*)param, 0, NULL);
     boardcolor = RGB(255, 227, 132);
+    RefreshBoard();
+}
+
+Painter::~Painter() {
+    MessageQueue.emplace(JudgeMessage(JUDGEMSG_EXIT));
+    delete MainChess;
+    //MyError
 }
 
 inline void Painter::DrawAChess(HDC hdc, UNIT_INTERFACE x, UNIT_INTERFACE y) {
@@ -117,7 +124,7 @@ void Painter::MouseOperation(UNIT_INTERFACE x, UNIT_INTERFACE y, UNIT_STATUS fla
 }
 
 void Painter::SaveToJson(const WCHAR* filename) {
-    //´ýÊµÏÖ
+    //Making
 }
 
 void Painter::RequestMode(UNIT_STATUS flag) {
@@ -129,7 +136,11 @@ void Painter::RequestMode(UNIT_STATUS flag) {
         Mode_Gaming(MODEMSG_SUSRES, -1, -1);
         break;
     case REQUEST_REPLAY:
+        break;
     case REQUEST_ANALYS:
+        break;
+    case REQUEST_GIVEIN:
+        Mode_Gaming(MODEMSG_GIVEIN, -1, -1);
         break;
     }
 }
@@ -144,6 +155,9 @@ void Painter::Mode_Gaming(UNIT_STATUS flag, UNIT_SIZE x, UNIT_SIZE y) {
         break;
     case MODEMSG_REGRET:
         MessageQueue.emplace(JudgeMessage(JUDGEMSG_REGRET));
+        break;
+    case MODEMSG_GIVEIN:
+        MessageQueue.emplace(JudgeMessage(JUDGEMSG_GIVEIN));
         break;
     }
 }

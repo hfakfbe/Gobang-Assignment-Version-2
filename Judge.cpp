@@ -17,12 +17,13 @@ DWORD WINAPI Judgeproc(LPVOID param) {
 
         switch (msg.msg) {
         case JUDGEMSG_SET:
-            if (MainChess->status == STATUS_GAMING) {
+            if (MainChess->status == STATUS_GAMING && MainChess->chessboard[msg.x][msg.y] == 0) {
                 MainChess->chessboard[msg.x][msg.y] = color;
                 MainChess->step.push_back(std::make_tuple(msg.x, msg.y, color));
                 UNIT_ID winner = MainChess->CheckEndLatest();
                 //Ë¢ĞÂ
                 color = color == PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
+                start = clock();
                 MainPainter->RefreshBoard();
                 //Ê¤ÀûĞûÑÔ
                 if (winner != ID_NULL) {
@@ -33,9 +34,10 @@ DWORD WINAPI Judgeproc(LPVOID param) {
             }
             break;
         case JUDGEMSG_REGRET:
-            if (MainChess->step.size()) {
+            if (MainChess->step.size() && MainChess->ifregret == true) {
                 MainChess->chessboard[std::get<0>(MainChess->step.back())][std::get<1>(MainChess->step.back())] = 0;
                 MainChess->step.pop_back();
+                color = color == PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
                 //Ë¢ĞÂ
                 MainPainter->RefreshBoard();
             }
@@ -44,6 +46,13 @@ DWORD WINAPI Judgeproc(LPVOID param) {
             if (MainChess->status == STATUS_GAMING) MainChess->status = STATUS_SUSPEND;
             else if (MainChess->status == STATUS_SUSPEND) MainChess->status = STATUS_GAMING;
             break;
+        case JUDGEMSG_GIVEIN:
+            MainChess->winner = color == PIECE_BLACK ? ID_WHITE : ID_BLACK;
+            MainChess->status = STATUS_END;
+            MainPainter->GameOverAlert(MainChess->winner);
+            break;
+        case JUDGEMSG_EXIT:
+            return 0;
         }
     }
     return 0;

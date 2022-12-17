@@ -128,7 +128,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     switch (message)
     {
     case WM_CREATE:
-        CurrentPainter = new Painter(hWnd, ID_HUMAN, ID_HUMAN, 15);
+        CurrentPainter = new Painter(hWnd, ID_HUMAN, ID_HUMAN, 15, -1, true);//默认棋盘
         break;
     case WM_MOUSEMOVE:
         CurrentPainter->MouseOperation(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), MOUSE_HOVER);
@@ -144,6 +144,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             {
             case IDM_NEWGAME:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_NEWGAME), hWnd, Newgame);
+                break;
+            case IDM_REGRET:
+                CurrentPainter->RequestMode(REQUEST_REGRET);
+                break;
+            case IDM_GIVEIN:
+                CurrentPainter->RequestMode(REQUEST_GIVEIN);
+                break;
+            case IDM_SUSRES:
+                CurrentPainter->RequestMode(REQUEST_SUSRES);
                 break;
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);

@@ -1,6 +1,7 @@
 #include "Chess.h"
 
-Chess::Chess(UNIT_ID blackid, UNIT_ID whiteid, UNIT_SIZE size):blackid(blackid), whiteid(whiteid) {
+Chess::Chess(UNIT_ID blackid, UNIT_ID whiteid, UNIT_SIZE size, time_t timelimit,bool ifregret):
+    blackid(blackid), whiteid(whiteid), timelimit(timelimit), ifregret(ifregret) {
 	this->size = size;
 	chessboard = new UNIT_BOARD * [size];
 	for (int i = 0; i < size; ++i) {
@@ -8,7 +9,6 @@ Chess::Chess(UNIT_ID blackid, UNIT_ID whiteid, UNIT_SIZE size):blackid(blackid),
 	}
 	begintime = time(nullptr);
 	endtime = -1;
-	timelimit = -1;
 	winner = -1;
 	status = STATUS_GAMING;
 }

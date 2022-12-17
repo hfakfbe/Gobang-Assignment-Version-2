@@ -15,12 +15,9 @@
 #define IDD_NEWGAME                     129
 #define IDD_NEWGAME_CHECK_REGRET        1002
 #define IDD_NEWGAME_COMBO_SIZE          1004
-#define IDD_NEWGAME_COMBO_MODE          1005
-#define IDD_NEWGAME_COMBO_TIMELIMIT     1006
 #define IDD_NEWGAME_STATIC_SIZE         1007
 #define IDD_NEWGAME_STATIC_MODE         1008
 #define IDD_NEWGAME_STATIC_TIMELIMIT    1009
-#define IDC_LIST1                       1011
 #define ID_32771                        32771
 #define ID_32772                        32772
 #define ID_32773                        32773

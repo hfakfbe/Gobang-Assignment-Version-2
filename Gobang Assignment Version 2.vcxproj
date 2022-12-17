@@ -143,6 +143,7 @@
     <ClCompile Include="AI.cpp" />
     <ClCompile Include="Chess.cpp" />
     <ClCompile Include="Gobang Assignment Version 2.cpp" />
+    <ClCompile Include="Json.cpp" />
     <ClCompile Include="Judge.cpp" />
     <ClCompile Include="Newgame.cpp" />
     <ClCompile Include="Painter.cpp" />
@@ -153,6 +154,9 @@
   <ItemGroup>
     <Image Include="Gobang Assignment Version 2.ico" />
     <Image Include="small.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resource.hm" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

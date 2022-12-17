@@ -68,6 +68,9 @@
     <ClCompile Include="Newgame.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Json.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Gobang Assignment Version 2.rc">
@@ -81,5 +84,10 @@
     <Image Include="Gobang Assignment Version 2.ico">
       <Filter>资源文件</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="resource.hm">
+      <Filter>头文件</Filter>
+    </None>
   </ItemGroup>
 </Project>
