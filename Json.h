@@ -2,7 +2,7 @@
 
 #include "framework.h"
 
-#define MAXN_SPACE 6
+#define MAXN_SPACE 7
 
 typedef bool		JSON_VALUE_BOOL;
 typedef char		JSON_VALUE_INT8;
@@ -20,7 +20,7 @@ private:
 
 	bool Succeed;
 
-	const char space[MAXN_SPACE] = { '\n', '\t', '\r', '\f', '\v', ' ' };
+	const char space[MAXN_SPACE] = { '\n', '\t', '\r', '\f', '\v', ' ', '\0'};
 	//解析调用
 	bool SkipSpace(JSON_BUFFER&, int&);//返回是否到达末尾
 	bool CheckBoolean(JSON_BUFFER&, int, int&, JSON_BUFFER&);//从第一个buffer读取，int是开始下标，解析结果存入第二个buffer
@@ -30,7 +30,7 @@ private:
 	bool CheckArray(JSON_BUFFER&, int, int&, JSON_BUFFER&);//里面再调用前三者
 public:
 	Json() { Succeed = true; }
-	Json(JSON_BUFFER);//buffer需要解析
+	Json(JSON_BUFFER&);//buffer需要解析
 	JSON_BUFFER Jsontostring();
 	inline bool isSucceed() { return Succeed; }
 
@@ -51,5 +51,5 @@ public:
 
 	void Askkey(const JSON_KEY_STRING, JSON_BUFFER&);
 
-	void Translatevector(const JSON_KEY_STRING, std::vector<JSON_BUFFER>&);
+	void Translatevector(const JSON_VALUE_STRING, std::vector<JSON_BUFFER>&);//传入数组buffer，传出真数组
 };

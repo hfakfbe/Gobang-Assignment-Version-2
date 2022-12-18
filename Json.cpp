@@ -120,7 +120,7 @@ bool Json::CheckBoolean(JSON_BUFFER& buffer, int pos, int& end, JSON_BUFFER& val
 				if (buffer[pos + i] != boolstring[j][i]) {
 					success = false; break;
 				}
-			if (success) { pos += boolstring[j].size(); value = boolstring[j]; return true; }
+			if (success) { end = pos + boolstring[j].size(); value = boolstring[j]; return true; }
 		}
 	}
 	return false;
@@ -131,6 +131,8 @@ bool Json::CheckInteger(JSON_BUFFER& buffer, int pos, int& end, JSON_BUFFER& val
 	bool flag = false;
 	while (pos < buffer.size()) {
 		if (buffer[pos] >= '0' && buffer[pos] <= '9') flag = true, value += buffer[pos++];
+		else if (flag == false && pos + 1 < buffer.size() && buffer[pos] == '-' && buffer[pos + 1] >= '0' && buffer[pos + 1] <= '9')
+			flag = true,  value += buffer[pos++];//负号支持，只允许第一个为负号，防止999-999的情况
 		else break;
 	}
 	end = pos;
@@ -216,7 +218,7 @@ bool Json::CheckArray(JSON_BUFFER& buffer, int pos, int& end, JSON_BUFFER& value
 
 #define TRANSLATE_FAIL do{ Succeed = false; KeysValues.clear(); return; }while(0)
 
-Json::Json(JSON_BUFFER buffer) {//排除其他不合法字符
+Json::Json(JSON_BUFFER& buffer) {//排除其他不合法字符。因为文件有时达到几万字节，应改为引用
 	Succeed = true;
 	int pos = 0;
 	if (SkipSpace(buffer, pos)) return;
@@ -251,14 +253,14 @@ Json::Json(JSON_BUFFER buffer) {//排除其他不合法字符
 	bool flag = false;
 	std::sort(KeysValues.begin(), KeysValues.end(), [&](const auto& a, const auto& b) {
 		int i = 0;
-	while (a.first.size() > i && b.first.size() > i) {
-		if (a.first[i] != b.first[i]) return a.first[i] < b.first[i];
-		i++;
-	}
-	if (a.first.size() > i) return true;
-	else if (b.first.size() > i) return false;
-	else flag = true;
-		});
+		while (a.first.size() > i && b.first.size() > i) {
+			if (a.first[i] != b.first[i]) return a.first[i] < b.first[i];
+			i++;
+		}
+		if (a.first.size() > i) return true;
+		else if (b.first.size() > i) return false;
+		else flag = true;
+	});
 	if (flag) TRANSLATE_FAIL;
 }
 
@@ -272,7 +274,9 @@ JSON_BUFFER Json::Jsontostring() {
 	return ans;
 }
 
-void Json::Askkey(const JSON_KEY_STRING key, JSON_BUFFER& value) {//只把buffer查找出来
+void Json::Askkey(const JSON_KEY_STRING keystr, JSON_BUFFER& value) {//只把buffer查找出来
+	value = "";
+	JSON_KEY_STRING key = '"' + keystr + '"';
 	for (int i = 0; i < KeysValues.size(); ++i) {
 		if (key == KeysValues[i].first) {
 			value = KeysValues[i].second;
@@ -281,7 +285,7 @@ void Json::Askkey(const JSON_KEY_STRING key, JSON_BUFFER& value) {//只把buffer查
 	}
 }
 
-void Json::Translatevector(const JSON_KEY_STRING values, std::vector<JSON_BUFFER>& value) {
+void Json::Translatevector(const JSON_VALUE_STRING values, std::vector<JSON_BUFFER>& value) {
 	std::stack<char> layer;
 	JSON_BUFFER tmp;
 	for (int i = 1; i < values.size(); ++i) {

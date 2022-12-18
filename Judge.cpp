@@ -7,6 +7,8 @@ DWORD WINAPI Judgeproc(LPVOID param) {
     Painter* MainPainter = ((Judgeparam*)param)->painter;
     clock_t start = clock(); 
     UNIT_ID color = PIECE_BLACK;
+    //读取文件
+    if (MainChess->step.size()) color = std::get<2>(MainChess->step.back()) == PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
     while (1) {
         if (clock() - start > (unsigned long long)MainChess->timelimit) {
             //超时

@@ -43,7 +43,7 @@ private:
 
 public:
 	Painter(HWND, UNIT_ID, UNIT_ID, UNIT_SIZE, time_t, bool);
-	Painter(const WCHAR*, HWND){}
+	Painter(const WCHAR*, HWND);
 	~Painter();
 
 	void PaintBoard(HDC, RECT*);//ª≠∆Â≈Ã

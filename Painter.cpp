@@ -13,6 +13,72 @@ Painter::Painter(HWND hWnd, UNIT_ID blackid, UNIT_ID whiteid, UNIT_SIZE size, ti
     RefreshBoard();
 }
 
+Painter::Painter(const WCHAR* filename, HWND hWnd) :hWnd(hWnd) {
+    boardcolor = RGB(255, 227, 132);
+    std::ifstream infile;
+    infile.open(filename);
+    infile.seekg(0, infile.end);
+    auto fos = infile.tellg();
+    unsigned long long filesize = fos;
+    bool flag = true;//是否成功加载
+    if (filesize < 100000) {
+        char* buffertmp = new char[filesize]();
+        infile.clear();
+        infile.seekg(0L, std::ios::beg);
+        infile.read(buffertmp,filesize);
+        std::string buffer(buffertmp);
+        for (int i = buffer.size()-1; i >= 0; --i) //不知道为啥，有时候末尾会出现4个0xFC（-3）
+            if (buffer[i] == '}') break;
+            else buffer[i] = 0;
+        delete[] buffertmp;
+        //载入+合法性判断
+        Json openjson(buffer);
+        std::string tmp;
+        UNIT_SIZE size; openjson.Askkey("size", tmp); size = atoi(tmp.c_str()); if (size < 9 || size>25) flag = false;
+        UNIT_STATUS status; openjson.Askkey("status", tmp); status = atoi(tmp.c_str());
+        if (status != STATUS_END) status = STATUS_GAMING;//统一一下状态（康师傅不服）
+        UNIT_ID blackid, whiteid, winner;
+        openjson.Askkey("blackid", tmp); blackid = atoi(tmp.c_str()); if (blackid != ID_HUMAN && blackid != ID_AI) flag = false;
+        openjson.Askkey("whiteid", tmp); whiteid = atoi(tmp.c_str()); if (whiteid != ID_HUMAN && whiteid != ID_AI) flag = false;
+        openjson.Askkey("winner", tmp); winner = atoi(tmp.c_str()); 
+        if (winner != ID_HUMAN && winner != ID_AI && winner != ID_NULL) flag = false;
+        time_t begintime, endtime, timelimit;
+        openjson.Askkey("begintime", tmp); begintime = atoll(tmp.c_str());
+        openjson.Askkey("endtime", tmp); endtime = atoll(tmp.c_str());
+        openjson.Askkey("timelimit", tmp); timelimit = atoll(tmp.c_str());
+        bool ifregret; openjson.Askkey("ifregret", tmp);
+        if (tmp == "true") ifregret = true;
+        else if (tmp == "false") ifregret = false;
+        else flag = false;
+        openjson.Askkey("step", tmp);
+        std::vector<std::string> steptmp;
+        openjson.Translatevector(tmp, steptmp);
+        if (flag) {
+            MainChess = new Chess(blackid, whiteid, size, timelimit, ifregret); 
+            for (int i = 0; i < steptmp.size(); ++i) {//初始化step
+                Json subjson(steptmp[i]);
+                UNIT_SIZE x, y;
+                UNIT_ID color;
+                subjson.Askkey("x", tmp); x = atoi(tmp.c_str());
+                subjson.Askkey("y", tmp); y = atoi(tmp.c_str());
+                subjson.Askkey("color", tmp); color = atoi(tmp.c_str());
+                if (x >= size || x < 0 || y >= size || y < 0 || (color != PIECE_BLACK && color != PIECE_WHITE)) break;
+                MainChess->step.push_back(std::make_tuple(x, y, color));
+                MainChess->chessboard[x][y] = color;
+            }
+            Judgeparam* param = new Judgeparam(MainChess, this);
+            hJudge = CreateThread(NULL, 0, Judgeproc, (void*)param, 0, NULL);
+            RefreshBoard();
+            return;
+        }
+    }
+    //默认初始化，因为C++不允许在构造函数中调用构造函数，也不会委托构造函数，就CV一遍了
+    MainChess = new Chess(ID_HUMAN, ID_HUMAN, 15, -1, true);
+    Judgeparam* param = new Judgeparam(MainChess, this);
+    hJudge = CreateThread(NULL, 0, Judgeproc, (void*)param, 0, NULL);
+    RefreshBoard();
+}
+
 Painter::~Painter() {
     MessageQueue.emplace(JudgeMessage(JUDGEMSG_EXIT));
     delete MainChess;
