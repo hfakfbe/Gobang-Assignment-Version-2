@@ -11,6 +11,7 @@ DWORD WINAPI Judgeproc(LPVOID param) {
     //读取文件
     if (MainChess->step.size()) color = std::get<2>(MainChess->step.back()) == PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
     AI* ai = new AI(MainChess->step, MainChess->size);
+    Gamenode* next = nullptr;
     while (true) {
         if (clock() - start > (unsigned long long)MainChess->timelimit) {
             //超时
@@ -27,8 +28,7 @@ DWORD WINAPI Judgeproc(LPVOID param) {
                     MainChess->step.push_back(std::make_tuple(msg.x, msg.y, color));
                 }
                 else {
-                    
-                    ai->Calculate();
+                    next = ai->Calculate(0, next);
                 }
                 UNIT_ID winner = MainChess->CheckEndLatest();
                 //刷新

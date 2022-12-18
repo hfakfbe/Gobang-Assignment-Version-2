@@ -34,27 +34,30 @@ void Trie::getfail() {
 	}
 }
 
-AI::AI(std::vector<std::tuple<UNIT_SIZE, UNIT_SIZE, UNIT_ID>> step, UNIT_SIZE s) {
+AI::AI(std::vector<std::tuple<UNIT_SIZE, UNIT_SIZE, UNIT_ID>> step, UNIT_SIZE size) {
 	//初始化棋盘
-	size = s;
+	this->size = size;
 	chessboard = new UNIT_BOARD * [size];
 	for (int i = 0; i < size; ++i) {
 		chessboard[i] = new UNIT_BOARD[size];
 		memset(chessboard[i], '0', size);
 	}
+	//初始化博弈树
+	gametree = new Gamenode(nullptr,-1,-1,PIECE_WHITE,0);//空棋盘
 	for (int i = 0; i < step.size(); ++i) {
-		chessboard[std::get<0>(step[i])][std::get<1>(step[i])] = std::get<2>(step[i])==PIECE_WHITE ? '2' : '1';//空0黑1白2
+		//空0黑1白2
+		UNIT_SIZE x = std::get<0>(step[i]), y = std::get<1>(step[i]);
+		UNIT_ID color = std::get<2>(step[i]);
+		chessboard[x][y] = color==PIECE_WHITE ? '2' : '1';
+		gametree = new Gamenode(gametree, x, y, color, 0);
 	}
 	//初始化AC自动机
 	match[0] = new Trie, match[1] = new Trie;
 	for (int i = 0; i < PATTERNMAX; ++i) match[0]->insert(patternsA[i], 0, i), match[1]->insert(patternsB[i], 0, i);
 	match[0]->getfail(); match[1]->getfail();
-	//初始化博弈树
-	gametree = new Gamenode;
-	gametree->color = 0; gametree->father = nullptr; gametree->score = Estimate(0); gametree->x = gametree->y = -1;
 }
 
-inline void AI::Query(const char* str, Trie* head, char len, char* nums) {
+inline void AI::Query(const char* str, Trie* head, char len, char* nums) {//匹配AC自动机
 	for (int i = 0; i < len; ++i) {
 		char c = str[i] - '0';
 		while (head->next[c] == NULL && head->fail) head = head->fail;
@@ -153,6 +156,51 @@ int AI::Estimate(char color) {
 	return ans;
 }
 
+Gamenode* AI::Calculate(UNIT_SIZE layer, UNIT_SIZE maxlayer, UNIT_ID color) {
+	if (layer == maxlayer) {
+		gametree->score = Estimate(color); return nullptr;
+	}
+	char** v = new char* [size];
+	for (int i = 0; i < size; ++i) v[i] = new char[size]();//是否访问
+	for (int i = 0; i < size; ++i) {
+		for (int j = 0; j < size; ++j) {
+			if (chessboard[i][j] != '0') {
+				for (const auto& dir : Directions) {
+					UNIT_SIZE nx = i + dir[0], ny = j + dir[1];
+					if (nx >= 0 && nx < 15 && ny >= 0 && ny < 15 && v[nx][ny] == 0 && chessboard[nx][ny] == '0') {
+						v[nx][ny] = 1;
+						chessboard[nx][ny] = color == PIECE_BLACK ? '1' : '2';//浅尝辄止，为了初次估价
+						Gamenode* newnode = new Gamenode(gametree,nx,ny,color,Estimate(color));
+						chessboard[nx][ny] = '0';
+						gametree->insert_BST(newnode);//插入BST
+						if (newnode->score > 75000000 || newnode->score < -75000000) {
+							gametree->score = newnode->score; return newnode;//不算了，走newnode就赢了
+						}
+					}
+				}
+			}
+		}
+	}
+	for (int i = 0; i < size; ++i) delete[] v[i];
+	delete[] v;
+	if (gametree->head == nullptr) {//未落子状态，全盘均落子状态应该由Judge处理
+		chessboard[size/2][size/2] = color == PIECE_BLACK ? '1' : '2';
+		Gamenode* newnode = new Gamenode(gametree, size / 2, size / 2, color, Estimate(color));
+		chessboard[size/2][size/2] = '0';
+		return newnode;
+	}
+	Gamenode* ans;
+	while (true) {//需要旋转操作
+		//找到BST最右节点，计算更新calclayer，如比父小，旋转到根
+		//再算最右，直到最右的layer是maxlayer
+	}
+	if (layer == 0) {
+		return ans;
+	}
+	return nullptr;
+}
+
+/*
 Gamenode* AI::Calculate(int layer, Gamenode* head) {
 	if (head == nullptr) head = gametree;
 	std::priority_queue<Gamenode*, std::vector<Gamenode*>, cmp> next;//因为vs2022报错，不能将优先队列放在结构体里
@@ -213,7 +261,7 @@ Gamenode* AI::Calculate(int layer, Gamenode* head) {
 		return ans;
 	}
 	return head;
-}
+}*/
 
 void AI::SetChess(int x, int y, int color) {
 	chessboard[x][y] = color == PIECE_BLACK ? '1' : '2';

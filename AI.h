@@ -11,16 +11,43 @@
 class Gamenode {
 public:
 	Gamenode* father;
-	char x, y, color;
+	Gamenode_BST* head;//sons
+
+	UNIT_SIZE x, y, calclayer;
+	UNIT_ID color;
 	int score;
+	Gamenode(Gamenode* father, UNIT_SIZE x, UNIT_SIZE y, UNIT_ID color, int score):
+		father(father), x(x),y(y),color(color),score(score){
+		calclayer = 0;
+		head = nullptr;
+	}
+	void insert_BST(Gamenode* node) {
+		if (head == nullptr) head = new Gamenode_BST(node);
+		else head->insert(node);
+	}
 };
 
+class Gamenode_BST {
+public:
+	Gamenode_BST* son[2];
+	Gamenode* current;
+	Gamenode_BST(Gamenode* head) {
+		current = head;
+		son[0] = son[1] = nullptr;
+	}
+	void insert(Gamenode* node) {
+		int d = node->score > current->score;
+		if (son[d] != nullptr) son[d]->insert(node);
+		else son[d] = new Gamenode_BST(node);
+	}
+};
+/*
 struct cmp {
 	bool operator()(Gamenode*& a, Gamenode*& b) {
 		if (a->color == 0) return a->score < b->score;
 		return a->score > b->score;
 	}
-};
+};*/
 
 class Trie {
 public:
@@ -35,6 +62,7 @@ class AI : public Board {
 private:
 	Gamenode* gametree;
 	Trie* match[2];
+	//const
 	const char* patternsA[PATTERNMAX] = { "11111","011110","211110","011112","01110","21110","01112",
 		"2110","0112","0110","010","210","012" };
 	const char* patternsB[PATTERNMAX] = { "22222","022220","122220","022221","02220","12220","02221",
