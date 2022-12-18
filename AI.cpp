@@ -34,7 +34,7 @@ void Trie::getfail() {
 	}
 }
 
-AI::AI(std::vector<POINT> step, int s) {
+AI::AI(std::vector<std::tuple<UNIT_SIZE, UNIT_SIZE, UNIT_ID>> step, UNIT_SIZE s) {
 	//初始化棋盘
 	size = s;
 	chessboard = new UNIT_BOARD * [size];
@@ -43,7 +43,7 @@ AI::AI(std::vector<POINT> step, int s) {
 		memset(chessboard[i], '0', size);
 	}
 	for (int i = 0; i < step.size(); ++i) {
-		chessboard[step[i].x + 1][step[i].y + 1] = (i & 1) ? '2' : '1';//空0黑1白2边3
+		chessboard[std::get<0>(step[i])][std::get<1>(step[i])] = std::get<2>(step[i])==PIECE_WHITE ? '2' : '1';//空0黑1白2
 	}
 	//初始化AC自动机
 	match[0] = new Trie, match[1] = new Trie;

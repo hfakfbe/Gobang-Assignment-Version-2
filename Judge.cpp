@@ -1,4 +1,5 @@
 #include "Judge.h"
+#include "AI.h"
 
 std::queue<JudgeMessage> MessageQueue;
 
@@ -9,7 +10,8 @@ DWORD WINAPI Judgeproc(LPVOID param) {
     UNIT_ID color = PIECE_BLACK;
     //读取文件
     if (MainChess->step.size()) color = std::get<2>(MainChess->step.back()) == PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
-    while (1) {
+    AI* ai = new AI(MainChess->step, MainChess->size);
+    while (true) {
         if (clock() - start > (unsigned long long)MainChess->timelimit) {
             //超时
         }
@@ -20,8 +22,14 @@ DWORD WINAPI Judgeproc(LPVOID param) {
         switch (msg.msg) {
         case JUDGEMSG_SET:
             if (MainChess->status == STATUS_GAMING && MainChess->chessboard[msg.x][msg.y] == 0) {
-                MainChess->chessboard[msg.x][msg.y] = color;
-                MainChess->step.push_back(std::make_tuple(msg.x, msg.y, color));
+                if ((color == PIECE_BLACK ? MainChess->blackid : MainChess->whiteid) == ID_HUMAN) {
+                    MainChess->chessboard[msg.x][msg.y] = color;
+                    MainChess->step.push_back(std::make_tuple(msg.x, msg.y, color));
+                }
+                else {
+                    
+                    ai->Calculate();
+                }
                 UNIT_ID winner = MainChess->CheckEndLatest();
                 //刷新
                 color = color == PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK;
