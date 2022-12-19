@@ -8,6 +8,19 @@
 #define AI_PLAYER		1
 #define AI_BOARD_MAXN	3
 
+class Gamenode;
+
+class Gamenode_BST {
+public:
+	Gamenode_BST* son[2], *father;
+	Gamenode* current;
+	Gamenode_BST(Gamenode* head, Gamenode_BST* father):father(father) {
+		current = head;
+		son[0] = son[1] = nullptr;
+	}
+	void insert(Gamenode*);
+};
+
 class Gamenode {
 public:
 	Gamenode* father;
@@ -22,25 +35,17 @@ public:
 		head = nullptr;
 	}
 	void insert_BST(Gamenode* node) {
-		if (head == nullptr) head = new Gamenode_BST(node);
+		if (head == nullptr) head = new Gamenode_BST(node, nullptr);
 		else head->insert(node);
+	}
+	void rotate_BST(Gamenode_BST* &node, int d) {
+		Gamenode_BST* t = node->son[d ^ 1];
+		node->son[d ^ 1] = t->son[d];
+		t->son[d] = node;
+		node = t;
 	}
 };
 
-class Gamenode_BST {
-public:
-	Gamenode_BST* son[2];
-	Gamenode* current;
-	Gamenode_BST(Gamenode* head) {
-		current = head;
-		son[0] = son[1] = nullptr;
-	}
-	void insert(Gamenode* node) {
-		int d = node->score > current->score;
-		if (son[d] != nullptr) son[d]->insert(node);
-		else son[d] = new Gamenode_BST(node);
-	}
-};
 /*
 struct cmp {
 	bool operator()(Gamenode*& a, Gamenode*& b) {
@@ -71,8 +76,9 @@ private:
 public:
 	AI(std::vector<std::tuple<UNIT_SIZE, UNIT_SIZE, UNIT_ID>>, UNIT_SIZE);
 	int Estimate(char);//对当前局面估值，对行、列、斜用Query
-	Gamenode* Calculate(int, Gamenode*);//计算下一手
+	//计算本节点的分数，更新父节点分数,最后返回计算的最佳手段，否则返回nullptr
+	Gamenode* Calculate(UNIT_SIZE, UNIT_SIZE, UNIT_ID);
 	void Query(const char*, Trie*, char, char*);//利用AC自动机计算某行棋子的匹配数量
-	void SetChess(int, int, int);
-	//和Chess类的接口
+	void SetChess(Gamenode*);
+	Gamenode* SearchNode(UNIT_SIZE, UNIT_SIZE, UNIT_ID);
 };

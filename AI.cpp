@@ -156,25 +156,33 @@ int AI::Estimate(char color) {
 	return ans;
 }
 
-Gamenode* AI::Calculate(UNIT_SIZE layer, UNIT_SIZE maxlayer, UNIT_ID color) {
+void Gamenode_BST::insert(Gamenode* node) {
+	int d = node->score > current->score;
+	if (son[d] != nullptr) son[d]->insert(node);
+	else son[d] = new Gamenode_BST(node, this);
+}
+
+Gamenode* AI::Calculate(UNIT_SIZE layer, UNIT_SIZE maxlayer, UNIT_ID color) {//计算本节点的分数，更新父节点分数
 	if (layer == maxlayer) {
 		gametree->score = Estimate(color); return nullptr;
 	}
-	char** v = new char* [size];
+	char** v = new char* [size];//考虑static，memset替换
 	for (int i = 0; i < size; ++i) v[i] = new char[size]();//是否访问
-	for (int i = 0; i < size; ++i) {
-		for (int j = 0; j < size; ++j) {
-			if (chessboard[i][j] != '0') {
-				for (const auto& dir : Directions) {
-					UNIT_SIZE nx = i + dir[0], ny = j + dir[1];
-					if (nx >= 0 && nx < 15 && ny >= 0 && ny < 15 && v[nx][ny] == 0 && chessboard[nx][ny] == '0') {
-						v[nx][ny] = 1;
-						chessboard[nx][ny] = color == PIECE_BLACK ? '1' : '2';//浅尝辄止，为了初次估价
-						Gamenode* newnode = new Gamenode(gametree,nx,ny,color,Estimate(color));
-						chessboard[nx][ny] = '0';
-						gametree->insert_BST(newnode);//插入BST
-						if (newnode->score > 75000000 || newnode->score < -75000000) {
-							gametree->score = newnode->score; return newnode;//不算了，走newnode就赢了
+	if (gametree->calclayer == 0) {//如果没算过
+		for (int i = 0; i < size; ++i) {
+			for (int j = 0; j < size; ++j) {
+				if (chessboard[i][j] != '0') {
+					for (const auto& dir : Directions) {
+						UNIT_SIZE nx = i + dir[0], ny = j + dir[1];
+						if (nx >= 0 && nx < 15 && ny >= 0 && ny < 15 && v[nx][ny] == 0 && chessboard[nx][ny] == '0') {
+							v[nx][ny] = 1;
+							chessboard[nx][ny] = color == PIECE_BLACK ? '1' : '2';//浅尝辄止，为了初次估价
+							Gamenode* newnode = new Gamenode(gametree, nx, ny, color, Estimate(color));//生成下一层
+							chessboard[nx][ny] = '0';
+							gametree->insert_BST(newnode);//插入BST
+							if (newnode->score > 75000000 || newnode->score < -75000000) {
+								gametree->score = newnode->score; return newnode;//不算了，走newnode就赢了
+							}
 						}
 					}
 				}
@@ -184,18 +192,41 @@ Gamenode* AI::Calculate(UNIT_SIZE layer, UNIT_SIZE maxlayer, UNIT_ID color) {
 	for (int i = 0; i < size; ++i) delete[] v[i];
 	delete[] v;
 	if (gametree->head == nullptr) {//未落子状态，全盘均落子状态应该由Judge处理
-		chessboard[size/2][size/2] = color == PIECE_BLACK ? '1' : '2';
+		chessboard[size / 2][size / 2] = color == PIECE_BLACK ? '1' : '2';
 		Gamenode* newnode = new Gamenode(gametree, size / 2, size / 2, color, Estimate(color));
-		chessboard[size/2][size/2] = '0';
+		chessboard[size / 2][size / 2] = '0';
 		return newnode;
 	}
-	Gamenode* ans;
-	while (true) {//需要旋转操作
-		//找到BST最右节点，计算更新calclayer，如比父小，旋转到根
-		//再算最右，直到最右的layer是maxlayer
-	}
-	if (layer == 0) {
-		return ans;
+	while (true) {
+		//color是黑，BST里下的都是黑棋，应该找最大的，也就是最右的，反之最左的
+		//找到BST最右/左节点，计算更新calclayer，删除重新插入
+		//再算最右/左，直到最右/左的layer是maxlayer
+		int d = color == PIECE_BLACK;//黑1白0
+		Gamenode_BST* t = gametree->head;
+		while (t->son[d] != nullptr) t = t->son[d];
+		Gamenode* tnode = t->current;
+		if (tnode->calclayer != maxlayer) {
+			//先转移到下一个node计算，再返回本node
+			UNIT_SIZE x = tnode->x, y = tnode->y;
+			chessboard[x][y] = color == PIECE_BLACK ? '1' : '2';
+			gametree = t->current;
+			Calculate(layer + 1, maxlayer, color == PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK);
+			chessboard[x][y] = '0';
+			gametree = gametree->father;
+			//更新
+			tnode->calclayer = maxlayer - layer;
+			//删除
+			if (t->father == nullptr) gametree->head = t->son[d ^ 1];//t是gametree->head
+			else t->father->son[d] = t->son[d ^ 1];
+			delete t;
+			//插入
+			gametree->insert_BST(tnode);
+		}
+		else {//更新gamenode的父节点
+			gametree->father->score = tnode->score; 
+			if (layer == 0) return tnode;
+			break;
+		}
 	}
 	return nullptr;
 }
@@ -263,7 +294,23 @@ Gamenode* AI::Calculate(int layer, Gamenode* head) {
 	return head;
 }*/
 
-void AI::SetChess(int x, int y, int color) {
+void AI::SetChess(Gamenode* next) {
+	chessboard[next->x][next->y] = next->color == PIECE_BLACK ? '1' : '2';
+	gametree = next;
+}
+
+Gamenode* AI::SearchNode(UNIT_SIZE x, UNIT_SIZE y, UNIT_ID color) {//BFS
+	std::queue<Gamenode_BST*> Q;
+	if(gametree->head != nullptr) Q.emplace(gametree->head);
+	while (!Q.empty()) {
+		Gamenode_BST* t = Q.front(); Q.pop();
+		if (t->current->x == x && t->current->y == y && t->current->color == color) return t->current;
+		if (t->son[0]) Q.emplace(t->son[0]);
+		if (t->son[1]) Q.emplace(t->son[1]);
+	}
 	chessboard[x][y] = color == PIECE_BLACK ? '1' : '2';
-	gametree->color = color == PIECE_BLACK ? 0 : 1;
+	Gamenode* newnode = new Gamenode(gametree, x, y, color, Estimate(color));
+	chessboard[x][y] = '0';
+	gametree->insert_BST(newnode);
+	return newnode;
 }
