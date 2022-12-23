@@ -1,15 +1,28 @@
 #include "Painter.h"
-#include "Json.h"
 
 const WCHAR* Win_black = L"Black Win!";
 const WCHAR* Win_white = L"White Win!";
 const WCHAR* Win_title = L"Game Over!";
+
+WCHAR** RightBlankString;
+WCHAR** LeftBlankString;
 
 Painter::Painter(HWND hWnd, UNIT_ID blackid, UNIT_ID whiteid, UNIT_SIZE size, time_t timelimit, bool ifregret) :hWnd(hWnd) {
     MainChess = new Chess(blackid, whiteid, size, timelimit, ifregret);
     Judgeparam* param = new Judgeparam(MainChess, this);
     hJudge = CreateThread(NULL, 0, Judgeproc, (void*)param, 0, NULL);
     boardcolor = RGB(255, 227, 132);
+    //背景
+    InitBackground();
+    if (blackid == ID_AI) {
+        ChangeBlank(BLANK_LEFT, L"黑方：AI", 7);
+    }
+    else ChangeBlank(BLANK_LEFT, L"黑方：人类", 7);
+    if (whiteid == ID_AI) {
+        ChangeBlank(BLANK_LEFT, L"白方：AI", 8);
+    }
+    else ChangeBlank(BLANK_LEFT, L"白方：人类", 8);
+    //刷新
     RefreshBoard();
 }
 
@@ -41,7 +54,7 @@ Painter::Painter(const WCHAR* filename, HWND hWnd) :hWnd(hWnd) {
         openjson.Askkey("blackid", tmp); blackid = atoi(tmp.c_str()); if (blackid != ID_HUMAN && blackid != ID_AI) flag = false;
         openjson.Askkey("whiteid", tmp); whiteid = atoi(tmp.c_str()); if (whiteid != ID_HUMAN && whiteid != ID_AI) flag = false;
         openjson.Askkey("winner", tmp); winner = atoi(tmp.c_str()); 
-        if (winner != ID_HUMAN && winner != ID_AI && winner != ID_NULL) flag = false;
+        if (winner != ID_BLACK && winner != ID_WHITE && winner != ID_NULL) flag = false;
         time_t begintime, endtime, timelimit;
         openjson.Askkey("begintime", tmp); begintime = atoll(tmp.c_str());
         openjson.Askkey("endtime", tmp); endtime = atoll(tmp.c_str());
@@ -55,6 +68,10 @@ Painter::Painter(const WCHAR* filename, HWND hWnd) :hWnd(hWnd) {
         openjson.Translatevector(tmp, steptmp);
         if (flag) {
             MainChess = new Chess(blackid, whiteid, size, timelimit, ifregret); 
+            MainChess->status = status;
+            MainChess->begintime = begintime;
+            MainChess->endtime = endtime;
+            MainChess->winner = winner;
             for (int i = 0; i < steptmp.size(); ++i) {//初始化step
                 Json subjson(steptmp[i]);
                 UNIT_SIZE x, y;
@@ -218,6 +235,7 @@ void Painter::SaveToJson(const WCHAR* filename) {
 }
 
 void Painter::RequestMode(UNIT_STATUS flag) {
+    int index = -1;
     switch (flag) {
     case REQUEST_REGRET:
         Mode_Gaming(MODEMSG_REGRET, -1, -1);
@@ -226,6 +244,16 @@ void Painter::RequestMode(UNIT_STATUS flag) {
         Mode_Gaming(MODEMSG_SUSRES, -1, -1);
         break;
     case REQUEST_REPLAY:
+        index = Mode_Replay(MODEREP_START);
+        break;
+    case REQUEST_REPEND:
+        index = Mode_Replay(MODEREP_END);
+        break;
+    case REQUEST_REPNEXT:
+        index = Mode_Replay(MODEREP_NEXT);
+        break;
+    case REQUEST_REPBACK:
+        index = Mode_Replay(MODEREP_BACK);
         break;
     case REQUEST_ANALYS:
         break;
@@ -233,6 +261,13 @@ void Painter::RequestMode(UNIT_STATUS flag) {
         Mode_Gaming(MODEMSG_GIVEIN, -1, -1);
         break;
     }
+    WCHAR buffer[20] = {};
+    if (index != -1) {
+        wsprintfW(buffer, L"回放：第%d手", index);
+    }
+    ChangeBlank(BLANK_RIGHT, buffer, 5);
+    ChangeBlankStatus();
+    RefreshBoard();
 }
 
 void Painter::Mode_Gaming(UNIT_STATUS flag, UNIT_SIZE x, UNIT_SIZE y) {
@@ -252,10 +287,52 @@ void Painter::Mode_Gaming(UNIT_STATUS flag, UNIT_SIZE x, UNIT_SIZE y) {
     }
 }
 
+int Painter::Mode_Replay(UNIT_STATUS flag) {
+    //RightBlank(L"11111", 1);
+    static UNIT_STATUS previous;
+    static int index = 0;
+    switch (flag) {
+    case MODEREP_START:
+        if (MainChess->step.size() == 0) return -1;
+        previous = MainChess->status;
+        MainChess->status = STATUS_REPLAY;
+        for (int i = 0; i < MainChess->size; ++i) {
+            for (int j = 0; j < MainChess->size; ++j)
+                MainChess->chessboard[i][j] = 0;
+        }
+        break;
+    case MODEREP_END:
+        if (MainChess->status != STATUS_REPLAY) return -1;
+        for (; index < MainChess->step.size(); ++index) {
+            MainChess->chessboard[std::get<0>(MainChess->step[index])][std::get<1>(MainChess->step[index])] = std::get<2>(MainChess->step[index]);
+        }
+        MainChess->status = previous;
+        index = -1;
+        break;
+    case MODEREP_BACK:
+        if (MainChess->status != STATUS_REPLAY) return -1;
+        if (index == 0) return 0;
+        index--;
+        MainChess->chessboard[std::get<0>(MainChess->step[index])][std::get<1>(MainChess->step[index])] = 0;
+        break;
+    case MODEREP_NEXT:
+        if (MainChess->status != STATUS_REPLAY) return -1;
+        if (index >= MainChess->step.size()) return MainChess->step.size() - 1;
+        MainChess->chessboard[std::get<0>(MainChess->step[index])][std::get<1>(MainChess->step[index])] = std::get<2>(MainChess->step[index]);
+        index++;
+        break;
+    }
+    return index;
+}
+
 void Painter::RefreshBoard() {
     HDC hdc = GetDC(hWnd);
     RECT rect; GetClientRect(hWnd, &rect);
     PaintBoard(hdc, &rect);
+    //
+    ChangeBlankStatus();
+    DrawBlank(hdc, BLANK_LEFT);
+    DrawBlank(hdc, BLANK_RIGHT);
 }
 
 void Painter::GameOverAlert(UNIT_ID color) {
@@ -265,4 +342,117 @@ void Painter::GameOverAlert(UNIT_ID color) {
     else {
         MessageBox(hWnd, Win_white, Win_title, MB_OK);
     }
+}
+
+void Painter::DrawBlank(HDC hdc, UNIT_STATUS flag) {
+    WCHAR** cur;
+    if (flag == BLANK_LEFT) cur = LeftBlankString;
+    else cur = RightBlankString;
+    HFONT hFont = CreateFont(30, 0, 0, 0, 900, 0, 0, 0, GB2312_CHARSET, 0, 0, 0, 0, L"黑体");
+    SelectObject(hdc, hFont);
+    //SetTextColor(hdc, RGB(255, 0, 0));
+    HPEN hPen = CreatePen(PS_SOLID, 1, RGB(255, 255, 255));
+    SelectObject(hdc, hPen);
+    HBRUSH hBrh = CreateSolidBrush(RGB(255, 255, 255));
+    SelectObject(hdc, hBrh);
+    RECT rect; GetClientRect(hWnd, &rect);
+    rect.top = 0;
+    rect.left = flag == BLANK_LEFT ? 0 : vertex[1].x;
+    rect.right = flag == BLANK_LEFT ? vertex[0].x : rect.right;
+    Rectangle(hdc, rect.left, rect.top, rect.right, rect.bottom);
+    for (int i = 0; i < (flag == BLANK_LEFT ? MAXN_LEFTBLANK : MAXN_RIGHTBLANK); ++i) {
+        rect.top += rect.bottom / (MAXN_RIGHTBLANK + 1);
+        int len = lstrlen(cur[i]);
+        DrawText(hdc, cur[i], len, &rect, DT_CENTER);
+    }
+    DeleteObject(hFont);
+    DeleteObject(hPen);
+    DeleteObject(hBrh);
+}
+
+void Painter::InitBackground() {//背景图，左右栏
+    //左栏2行显示对局者
+    //右栏2行显示时间，状态
+    RightBlankString = new WCHAR * [MAXN_RIGHTBLANK];
+    LeftBlankString = new WCHAR * [MAXN_LEFTBLANK];
+    for (int i = 0; i < MAXN_RIGHTBLANK; ++i) {
+        RightBlankString[i] = new WCHAR();
+    }
+    for (int i = 0; i < MAXN_LEFTBLANK; ++i) {
+        LeftBlankString[i] = new WCHAR();
+    }
+}
+
+void Painter::ChangeBlank(UNIT_STATUS flag, const WCHAR* str, int index) {
+    WCHAR** cur;
+    if (flag == BLANK_LEFT) cur = LeftBlankString;
+    else cur = RightBlankString;
+    int len = lstrlen(str);
+    delete[] cur[index];
+    cur[index] = new WCHAR[len + 1];
+    for (int i = 0; i < len; ++i) {
+        cur[index][i] = str[i];
+    }
+    cur[index][len] = L'\0';
+}
+
+void Painter::ChangeBlankStatus() {
+    if (MainChess->status == STATUS_GAMING)
+        ChangeBlank(BLANK_RIGHT, L"正在对局", 8);
+    else if (MainChess->status == STATUS_SUSPEND)
+        ChangeBlank(BLANK_RIGHT, L"暂停", 8);
+    else if (MainChess->status == STATUS_REPLAY) {
+        ChangeBlank(BLANK_RIGHT, L"回放模式\n左右键，ESC", 8);
+    }
+    else if (MainChess->status == STATUS_END) {
+        if (MainChess->winner == ID_BLACK)
+            ChangeBlank(BLANK_RIGHT, L"黑胜", 8);
+        else if (MainChess->winner == ID_WHITE)
+            ChangeBlank(BLANK_RIGHT, L"白胜", 8);
+    }
+}
+
+std::vector<Json> Painter::LoadHistory() {
+    std::vector<std::string> ans;
+    std::ifstream infile;
+    infile.open("history.json");
+    if (infile.is_open()){
+        infile.seekg(0, infile.end);
+        auto fos = infile.tellg();
+        unsigned long long filesize = fos;
+        char* tmp = new char[filesize]();
+        infile.clear();
+        infile.seekg(0L, std::ios::beg);
+        infile.read(tmp, filesize);
+        infile.close();
+        std::string buffer(tmp);
+        delete[] tmp;
+        for (int i = buffer.size() - 1; i >= 0; --i)
+            if (buffer[i] == '}') break; else buffer[i] = '\0';
+        Json json(buffer);
+        std::string vectorbuffer;
+        json.Askkey("history", vectorbuffer);
+        json.Translatevector(vectorbuffer, ans);
+    }
+    std::vector<Json> history;
+    for (int i = 0; i < ans.size(); ++i) {
+        history.push_back(Json(ans[i]));
+    }
+    return history;
+}
+
+void Painter::AddHistory(time_t endtime, UNIT_ID blackid, UNIT_ID whiteid, UNIT_ID winner) {
+    std::vector<Json> history = LoadHistory();
+    Json subjson;
+    subjson.Addkey("endtime", endtime);
+    subjson.Addkey("blackid", blackid);
+    subjson.Addkey("whiteid", whiteid);
+    subjson.Addkey("winner", winner);
+    history.push_back(subjson);
+    Json newjson;
+    newjson.Addkey("history", history);
+    std::ofstream outfile;
+    outfile.open("history.json", std::ios::out | std::ios::trunc);
+    outfile << newjson.Jsontostring();
+    outfile.close();
 }

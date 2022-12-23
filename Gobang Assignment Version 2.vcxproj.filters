@@ -71,6 +71,9 @@
     <ClCompile Include="Json.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="History.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Gobang Assignment Version 2.rc">
@@ -82,6 +85,12 @@
       <Filter>资源文件</Filter>
     </Image>
     <Image Include="Gobang Assignment Version 2.ico">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="bitmap1.bmp">
+      <Filter>资源文件</Filter>
+    </Image>
+    <Image Include="C:\Users\Ysx\Desktop\wallhaven-k7q9m7.bmp">
       <Filter>资源文件</Filter>
     </Image>
   </ItemGroup>

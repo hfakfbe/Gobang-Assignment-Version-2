@@ -3,7 +3,7 @@
 #include "framework.h"
 #include "Chess.h"
 
-#define PATTERNMAX		13
+#define PATTERNMAX		21
 #define HUMAN			0
 #define AI_PLAYER		1
 #define AI_BOARD_MAXN	3
@@ -68,11 +68,11 @@ private:
 	Gamenode* gametree;
 	Trie* match[2];
 	//const
-	const char* patternsA[PATTERNMAX] = { "11111","011110","211110","011112","01110","21110","01112",
-		"2110","0112","0110","010","210","012" };
-	const char* patternsB[PATTERNMAX] = { "22222","022220","122220","022221","02220","12220","02221",
-		"1220","0221","0220","020","120","021" };
-	const int weight[PATTERNMAX] = { 100000000,1000000,3000,3000,2000,250,250,20,20,100,10,1,1 };
+	const char* patternsA[PATTERNMAX] = { "11111","011110","211110","011112","11011","11101","10111","010110","011010",
+		"011100","001110","211100","001112","211000","000112","001100","011000","001000","000100","210000","000012"};
+	const char* patternsB[PATTERNMAX] = { "22222","022220","122220","022221","22022","22202","20222","020220","022020",
+		"022200","002220","122200","002221","122000","000221","002200","022000","002000","000200","120000","000021"};
+	const int weight[PATTERNMAX] = { 100000000,1000000,3000,3000,1000,1000,1000,1500,1500,1500,1500,250,250,20,20,50,40,5,5,1,1 };
 public:
 	AI(std::vector<std::tuple<UNIT_SIZE, UNIT_SIZE, UNIT_ID>>, UNIT_SIZE);
 	int Estimate(char);//对当前局面估值，对行、列、斜用Query

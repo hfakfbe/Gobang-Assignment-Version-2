@@ -109,7 +109,7 @@ int AI::Estimate(char color) {
 	double alpha = 1;
 	if (color == 0) alpha = 1.2;
 	for (int i = 0; i < PATTERNMAX; ++i) {
-		ans += nums[i] * weight[i] * alpha;
+		ans += nums[i] * weight[i];// *alpha;
 	}
 	//?? 
 	memset(nums, 0, sizeof(nums));
@@ -151,7 +151,7 @@ int AI::Estimate(char color) {
 	alpha = 1;//º§Ω¯
 	if (color == 1) alpha = 1.2;
 	for (int i = 0; i < PATTERNMAX; ++i) {
-		ans -= nums[i] * weight[i] * alpha;
+		ans -= nums[i] * weight[i];// *alpha;
 	}
 	return ans;
 }
@@ -174,13 +174,14 @@ Gamenode* AI::Calculate(UNIT_SIZE layer, UNIT_SIZE maxlayer, UNIT_ID color) {//º
 				if (chessboard[i][j] != '0') {
 					for (const auto& dir : Directions) {
 						UNIT_SIZE nx = i + dir[0], ny = j + dir[1];
-						if (nx >= 0 && nx < 15 && ny >= 0 && ny < 15 && v[nx][ny] == 0 && chessboard[nx][ny] == '0') {
+						if (nx >= 0 && nx < size && ny >= 0 && ny < size && v[nx][ny] == 0 && chessboard[nx][ny] == '0') {
 							v[nx][ny] = 1;
 							chessboard[nx][ny] = color == PIECE_BLACK ? '1' : '2';//«≥≥¢È¸÷π£¨Œ™¡À≥ı¥Œπ¿º€
 							Gamenode* newnode = new Gamenode(gametree, nx, ny, color, Estimate(color));//…˙≥…œ¬“ª≤„
 							chessboard[nx][ny] = '0';
 							gametree->insert_BST(newnode);//≤Â»ÎBST
 							if (newnode->score > 75000000 || newnode->score < -75000000) {
+								newnode->score = newnode->score > 0 ? 100000000 : -100000000;
 								gametree->score = newnode->score; return newnode;//≤ªÀ„¡À£¨◊ﬂnewnodeæÕ”Æ¡À
 							}
 						}
@@ -191,7 +192,8 @@ Gamenode* AI::Calculate(UNIT_SIZE layer, UNIT_SIZE maxlayer, UNIT_ID color) {//º
 	}
 	for (int i = 0; i < size; ++i) delete[] v[i];
 	delete[] v;
-	if (gametree->head == nullptr) {//Œ¥¬‰◊”◊¥Ã¨£¨»´≈Ãæ˘¬‰◊”◊¥Ã¨”¶∏√”…Judge¥¶¿Ì
+	if (gametree->head == nullptr) {//Œ¥¬‰◊”◊¥Ã¨£¨»´≈Ãæ˘¬‰◊”◊¥Ã¨
+		if (chessboard[size / 2][size / 2] != '0') return nullptr;
 		chessboard[size / 2][size / 2] = color == PIECE_BLACK ? '1' : '2';
 		Gamenode* newnode = new Gamenode(gametree, size / 2, size / 2, color, Estimate(color));
 		chessboard[size / 2][size / 2] = '0';
@@ -205,19 +207,27 @@ Gamenode* AI::Calculate(UNIT_SIZE layer, UNIT_SIZE maxlayer, UNIT_ID color) {//º
 		Gamenode_BST* t = gametree->head;
 		while (t->son[d] != nullptr) t = t->son[d];
 		Gamenode* tnode = t->current;
-		if (tnode->calclayer != maxlayer) {
+		if (tnode->calclayer != maxlayer - layer - 1) {/*“…À∆‘⁄1≤„“‘…œÀ¿—≠ª∑£¨”¶Œ™maxlayer-layer-1*/
 			//œ»◊™“∆µΩœ¬“ª∏ˆnodeº∆À„£¨‘Ÿ∑µªÿ±ænode
 			UNIT_SIZE x = tnode->x, y = tnode->y;
 			chessboard[x][y] = color == PIECE_BLACK ? '1' : '2';
-			gametree = t->current;
+			gametree = tnode;/*ø…∏ƒŒ™tnode*/
 			Calculate(layer + 1, maxlayer, color == PIECE_BLACK ? PIECE_WHITE : PIECE_BLACK);
 			chessboard[x][y] = '0';
 			gametree = gametree->father;
 			//∏¸–¬
-			tnode->calclayer = maxlayer - layer;
+			tnode->calclayer = maxlayer - layer - 1;
 			//…æ≥˝
-			if (t->father == nullptr) gametree->head = t->son[d ^ 1];//t «gametree->head
-			else t->father->son[d] = t->son[d ^ 1];
+			if (t->father == nullptr) {
+				gametree->head = t->son[d ^ 1];//t «gametree->head
+				if (t->son[d ^ 1]) t->son[d ^ 1]->father = nullptr;
+			}
+			else {
+				t->father->son[d] = t->son[d ^ 1]; 
+				if(t->son[d ^ 1]) t->son[d ^ 1]->father = t->father;
+			}
+			/*head->son[1]æÕ «t->father->son[1]Œ™ ≤√¥√ª”–±‰≥…t->son[0]∞°£ø*/
+			/*tµƒfather¥ÌŒÛ*/
 			delete t;
 			//≤Â»Î
 			gametree->insert_BST(tnode);

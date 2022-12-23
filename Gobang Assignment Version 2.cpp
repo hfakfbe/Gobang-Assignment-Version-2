@@ -130,6 +130,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CREATE:
         CurrentPainter = new Painter(hWnd, ID_HUMAN, ID_HUMAN, 15, -1, true);//默认棋盘
         break;
+    case WM_KEYDOWN:
+        if (wParam == VK_LEFT) CurrentPainter->RequestMode(REQUEST_REPBACK);
+        else if (wParam == VK_RIGHT) CurrentPainter->RequestMode(REQUEST_REPNEXT);
+        else if (wParam == VK_ESCAPE) CurrentPainter->RequestMode(REQUEST_REPEND);
+        break;
     case WM_MOUSEMOVE:
         CurrentPainter->MouseOperation(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam), MOUSE_HOVER);
         break;
@@ -209,6 +214,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 }
                 break;
             }
+            case IDM_REPLAY:
+                CurrentPainter->RequestMode(REQUEST_REPLAY);
+                break;
+            case IDM_HISTORY:
+                DialogBox(hInst, MAKEINTRESOURCE(IDD_HISTORY), hWnd, History);
+                break;
             case IDM_ABOUT:
                 DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
                 break;
@@ -227,6 +238,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // TODO: 在此处添加使用 hdc 的任何绘图代码...
             RECT rect; GetClientRect(hWnd, &rect);
             CurrentPainter->PaintBoard(hdc, &rect);
+            CurrentPainter->DrawBlank(hdc, BLANK_LEFT);
+            CurrentPainter->DrawBlank(hdc, BLANK_RIGHT);
             EndPaint(hWnd, &ps);
         }
         break;

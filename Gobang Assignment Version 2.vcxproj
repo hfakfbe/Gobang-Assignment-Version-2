@@ -143,6 +143,7 @@
     <ClCompile Include="AI.cpp" />
     <ClCompile Include="Chess.cpp" />
     <ClCompile Include="Gobang Assignment Version 2.cpp" />
+    <ClCompile Include="History.cpp" />
     <ClCompile Include="Json.cpp" />
     <ClCompile Include="Judge.cpp" />
     <ClCompile Include="Newgame.cpp" />
@@ -152,6 +153,8 @@
     <ResourceCompile Include="Gobang Assignment Version 2.rc" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="bitmap1.bmp" />
+    <Image Include="C:\Users\Ysx\Desktop\wallhaven-k7q9m7.bmp" />
     <Image Include="Gobang Assignment Version 2.ico" />
     <Image Include="small.ico" />
   </ItemGroup>
